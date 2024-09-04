@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres
+    container_name: my-postgres-container
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=todo
+      - POSTGRES_DB=todo-cc18
+    ports:
+      - '5432:5432'
+    networks:
+      - app-network
+    restart: always
+
+  web:
+    build: ./
+    env_file:
+      - ./docker-compose.env
+    environment:
+      DATABASE_URL: 'pgsql://todo:password@my-postgres-container:5432/todo-cc18'
+      DB_HOST: my-postgres-container
+      DB_PORT: 5432
+    ports:
+      - '80:3333'
+    command: >
+      sh -c '
+        until  nc -z "$DB_HOST" "$DB_PORT"; do
+          echo "Waiting for database...";
+          sleep 1;
+        done;
+        echo "Database is up!";
+        if [ ! -f /app/.initialized ]; then
+          node ace migration:run --force
+          touch /app/.initialized;
+        fi;
+        npm start
+      '
+    depends_on:
+      - db
+    restart: on-failure
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
