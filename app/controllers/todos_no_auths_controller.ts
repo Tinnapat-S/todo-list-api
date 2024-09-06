@@ -7,6 +7,9 @@ export default class TodosNoAuthsController {
    * Display a list of resource
    */
   async index({ request }: HttpContext) {
+    if (!request.qs().userId) {
+      throw createError('?userId={your-id} is required', '1190', 400)
+    }
     return Todo.query().where('authenticated', false).where('user_id', request.qs().userId)
   }
 
