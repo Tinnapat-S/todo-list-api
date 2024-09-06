@@ -21,12 +21,18 @@ export default class TodosNoAuthsController {
     if (!title) {
       throw createError('Title is required', '1190', 400)
     }
+
     const todo = await Todo.create({
       userId: request.qs().userId,
       title,
       status,
     })
-    return todo
+
+    return {
+      id: todo.id,
+      title: todo.title,
+      status: todo.status || false,
+    }
   }
 
   /**
@@ -60,7 +66,9 @@ export default class TodosNoAuthsController {
     todo.merge({ title, status })
     await todo.save()
 
-    return todo
+    const returnTodo = await Todo.query().where('id', todo.id).where('authenticated', false).first()
+
+    return returnTodo
   }
 
   /**
@@ -75,6 +83,6 @@ export default class TodosNoAuthsController {
     const todo = await Todo.findOrFail(params.id)
     await todo.delete()
 
-    return response.noContent()
+    return { message: 'Todo deleted successfully' }
   }
 }

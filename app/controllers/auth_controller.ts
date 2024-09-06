@@ -1,13 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { createError } from '@adonisjs/core/exceptions'
 import User from '#models/user'
-import hash from '@adonisjs/core/services/hash'
-import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 
-const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
-  uids: ['student_id', 'email'],
-  passwordColumnName: 'password',
-})
 export default class AuthController {
   async getMe({ auth }: HttpContext) {
     await auth.check()
@@ -33,7 +27,9 @@ export default class AuthController {
     const accessToken = await User.accessTokens.create(user)
     // user.merge({ accessToken })
     const token = accessToken.toJSON().token
-    return { user, token }
+
+    const { id, ...userData } = user.serialize()
+    return { user: { ...userData, userId: id }, token }
   }
   async register({ request, response }: HttpContext) {
     const { fullName, email, password, confirmPassword, studentId } = request.only([
@@ -53,7 +49,7 @@ export default class AuthController {
 
     const userExists = await User.query().where('student_id', studentId).first()
     if (userExists) {
-      throw createError('User already exists', '1190', 400)
+      throw createError('Student ID already exists', '1190', 400)
     }
 
     const user = await User.create({
@@ -65,7 +61,9 @@ export default class AuthController {
 
     const accessToken = await User.accessTokens.create(user)
     const token = accessToken.toJSON().token
-    return { user, token }
+
+    const { id, ...userData } = user.serialize()
+    return { user: { ...userData, userId: id }, token }
   }
 
   async logout({ auth }: HttpContext) {

@@ -9,6 +9,7 @@
 
 import Router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+const MoviesController = () => import('#controllers/movies_controller')
 const TodosNoAuthController = () => import('#controllers/todos_no_auths_controller')
 const TodosController = () => import('#controllers/todos_controller')
 const AuthController = () => import('#controllers/auth_controller')
@@ -37,3 +38,13 @@ Router.group(() => {
   Router.patch('/:id', [TodosNoAuthController, 'edit'])
   Router.delete('/:id', [TodosNoAuthController, 'destroy'])
 }).prefix('api/v1/todo')
+
+Router.group(() => {
+  Router.get('/', [MoviesController, 'index'])
+  Router.get('/:id', [MoviesController, 'show'])
+  Router.post('/', [MoviesController, 'create'])
+  Router.patch('/:id', [MoviesController, 'update'])
+  Router.delete('/:id', [MoviesController, 'destroy'])
+})
+  .prefix('api/v3/movies')
+  .middleware(middleware.auth())
