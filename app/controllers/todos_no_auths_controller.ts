@@ -7,7 +7,7 @@ export default class TodosNoAuthsController {
    * Display a list of resource
    */
   async index({ request }: HttpContext) {
-    return Todo.query()
+    return Todo.query().where('authenticated', false).where('user_id', request.qs().userId)
   }
 
   /**
