@@ -9,12 +9,13 @@
 
 import Router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
+import { throttle } from './limiter.js'
 const MoviesController = () => import('#controllers/movies_controller')
 const TodosNoAuthController = () => import('#controllers/todos_no_auths_controller')
 const TodosController = () => import('#controllers/todos_controller')
 const AuthController = () => import('#controllers/auth_controller')
 
-Router.get('/health', ({ response }) => response.ok('OK'))
+Router.get('/health', ({ response }) => response.ok('OK')).use(throttle)
 
 Router.group(() => {
   Router.get('/', [TodosController, 'index'])
@@ -24,12 +25,15 @@ Router.group(() => {
 })
   .prefix('api/v2/todo-protect')
   .middleware(middleware.auth())
+  .use(throttle)
 
 Router.group(() => {
   Router.post('/login', [AuthController, 'login'])
   Router.post('/register', [AuthController, 'register'])
   Router.get('/me', [AuthController, 'getMe']).middleware(middleware.auth())
-}).prefix('api/auth')
+})
+  .prefix('api/auth')
+  .use(throttle)
 
 Router.group(() => {
   Router.get('/', [TodosNoAuthController, 'index'])
@@ -37,7 +41,9 @@ Router.group(() => {
   Router.post('/', [TodosNoAuthController, 'create'])
   Router.patch('/:id', [TodosNoAuthController, 'edit'])
   Router.delete('/:id', [TodosNoAuthController, 'destroy'])
-}).prefix('api/v1/todo')
+})
+  .prefix('api/v1/todo')
+  .use(throttle)
 
 Router.group(() => {
   Router.get('/', [MoviesController, 'index'])
@@ -48,3 +54,4 @@ Router.group(() => {
 })
   .prefix('api/v3/movies')
   .middleware(middleware.auth())
+  .use(throttle)
